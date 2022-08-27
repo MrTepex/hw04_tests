@@ -40,14 +40,12 @@ class PostFormsTest(TestCase):
             follow=True,
         )
         self.assertRedirects(response, reverse(
-            'posts:profile', kwargs={'username': self.post.author})
-                             )
+            'posts:profile', kwargs={'username': self.post.author}))
         self.assertEqual(Post.objects.count(), posts_amount + 1)
         self.assertTrue(Post.objects.filter(
             text='Тестовый текст',
             group=self.group,
-        ).exists()
-                        )
+        ).exists())
 
     def test_post_edit_form(self):
         """Проверка работы PostForm при изменении текста в post_edit"""
