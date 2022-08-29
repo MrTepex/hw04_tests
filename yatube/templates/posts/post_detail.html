@@ -32,7 +32,7 @@
     <p>
      {{ post.text }}
     </p>
-      {% if user.is_authenticated  %}
+      {% if user == post.author  %}
         <a class="btn btn-primary" href="{% url 'posts:post_edit' post.id %}">
           редактировать запись
         </a>

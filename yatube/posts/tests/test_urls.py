@@ -1,14 +1,19 @@
-from django.test import TestCase, Client
+from http import HTTPStatus
 
-from ..models import Group, Post, User
+from django.contrib.auth import get_user_model
+from django.test import Client, TestCase
+
+from ..models import Group, Post
 
 
-class PostsURLTests(TestCase):
+class PostURLTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='Anne_Hathaway')
+        cls.user = get_user_model().objects.create_user(
+            username='Anne_Hathaway'
+        )
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test_slug',
@@ -28,13 +33,13 @@ class PostsURLTests(TestCase):
     def test_posts_urls_exists_at_desired_location_for_everybody(self):
         """Проверка отклика страниц приложения posts"""
         urls = {
-            '/': 200,
-            '/group/test_slug/': 200,
-            '/profile/Anne_Hathaway/': 200,
-            '/posts/1/': 200,
-            '/posts/1/edit/': 302,
-            '/create/': 302,
-            '/unexisting_page/': 404,
+            '/': HTTPStatus.OK,
+            '/group/test_slug/': HTTPStatus.OK,
+            '/profile/Anne_Hathaway/': HTTPStatus.OK,
+            '/posts/1/': HTTPStatus.OK,
+            '/posts/1/edit/': HTTPStatus.FOUND,
+            '/create/': HTTPStatus.FOUND,
+            '/unexisting_page/': HTTPStatus.NOT_FOUND,
         }
         for address, status in urls.items():
             with self.subTest(address=address):
