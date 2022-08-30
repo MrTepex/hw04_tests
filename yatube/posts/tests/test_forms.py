@@ -55,9 +55,16 @@ class PostFormsTest(TestCase):
         ).exists())
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
+    def test_post_create_form_redirects_anonymous_to_login(self):
+        posts_amount = Post.objects.count()
+        response = self.guest_client.post(reverse('posts:post_create'))
+        self.assertRedirects(response, f"{reverse('users:login')}?next="
+                                       f"{reverse('posts:post_create')}")
+        self.assertNotEqual(Post.objects.count(), posts_amount + 1)
+
     def test_post_edit_form(self):
         """Проверка работы PostForm при изменении текста в post_edit
-        плюс редирект пользователя, который неавторизован
+        плюс редирект пользователя, который не авторизован
         или не является автором поста"""
         post = Post.objects.create(
             text='Старый текст',
