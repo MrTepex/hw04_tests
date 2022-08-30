@@ -71,7 +71,8 @@ class PostFormsTest(TestCase):
         self.assertEqual(Post.objects.get(id=post.id).text, 'Новый текст')
         self.assertRedirects(self.guest_client.get(
             reverse('posts:post_edit', kwargs={'post_id': 1})),
-            '/auth/login/?next=/posts/1/edit/')
+            f"{reverse('users:login')}?next="
+            f"{reverse('posts:post_edit', kwargs={'post_id': 1})}")
         response = self.authorized_client_2.post(reverse(
             'posts:post_edit', kwargs={'post_id': post.id}),
             data={'text': 'Новый текст'},

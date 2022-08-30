@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
+from django.urls import reverse
 
 
 class UsersURLTests(TestCase):
@@ -16,15 +17,16 @@ class UsersURLTests(TestCase):
     def test_users_urls_exist_at_desired_locations(self):
         """Проверка отклика страниц приложения users"""
         urls = {
-            '/auth/logout/': HTTPStatus.OK,
-            '/auth/signup/': HTTPStatus.OK,
-            '/auth/login/': HTTPStatus.OK,
-            '/auth/password_change/': HTTPStatus.FOUND,
-            '/auth/password_change/done/': HTTPStatus.FOUND,
-            '/auth/password_reset/': HTTPStatus.OK,
-            '/auth/password_reset/done/': HTTPStatus.OK,
-            '/auth/reset/1/2/': HTTPStatus.OK,
-            '/auth/reset/done/': HTTPStatus.OK,
+            reverse('users:logout'): HTTPStatus.OK,
+            reverse('users:signup'): HTTPStatus.OK,
+            reverse('users:login'): HTTPStatus.OK,
+            reverse('users:password_change'): HTTPStatus.FOUND,
+            reverse('users:password_change_done'): HTTPStatus.FOUND,
+            reverse('users:password_reset'): HTTPStatus.OK,
+            reverse('users:password_reset_done'): HTTPStatus.OK,
+            reverse('users:password_reset_confirm',
+                    kwargs={'uidb64': 1, 'token': 2}): HTTPStatus.OK,
+            reverse('users:password_reset_complete'): HTTPStatus.OK,
         }
         for address, status in urls.items():
             with self.subTest(address=address):

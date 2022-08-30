@@ -10,8 +10,8 @@ class AboutViewsTest(TestCase):
     def test_about_pages_uses_correct_templates(self):
         """Проверка корректных шаблонов страниц about"""
         templates_url_names = {
-            '/about/author/': 'about/author.html',
-            '/about/tech/': 'about/tech.html',
+            reverse('about:author'): 'about/author.html',
+            reverse('about:tech'): 'about/tech.html',
         }
         for address, template in templates_url_names.items():
             with self.subTest(address=address):
