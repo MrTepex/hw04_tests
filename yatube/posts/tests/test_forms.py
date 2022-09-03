@@ -1,13 +1,21 @@
+import shutil
+import tempfile
+
 from http import HTTPStatus
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from ..forms import PostForm
 from ..models import Group, Post
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostFormsTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -26,6 +34,11 @@ class PostFormsTest(TestCase):
         )
         cls.form = PostForm()
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client_1 = Client()
@@ -37,9 +50,23 @@ class PostFormsTest(TestCase):
         """Проверка работы редиректа, создания поста
          и наличия новой записи после ее создания """
         posts_amount = Post.objects.count()
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         form_data = {
             'text': 'Содержание только что созданного поста',
             'group': self.group.id,
+            'image': uploaded
         }
         response = self.authorized_client_1.post(
             reverse('posts:post_create'),
@@ -52,6 +79,7 @@ class PostFormsTest(TestCase):
         self.assertTrue(Post.objects.filter(
             text='Содержание только что созданного поста',
             group=self.group,
+            image='posts/small.gif'
         ).exists())
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -94,8 +122,12 @@ class PostFormsTest(TestCase):
         text_help_text = PostFormsTest.form.fields['text'].help_text
         group_label = PostFormsTest.form.fields['group'].label
         group_help_text = PostFormsTest.form.fields['group'].help_text
+        image_label = PostFormsTest.form.fields['image'].label
+        image_help_text = PostFormsTest.form.fields['image'].help_text
         self.assertEqual(text_label, 'Содержание поста')
         self.assertEqual(text_help_text, 'Текст поста')
         self.assertEqual(group_label, 'Группа')
         self.assertEqual(
             group_help_text, 'Группа, к которой будет относиться пост')
+        self.assertEqual(image_label, 'Картинка')
+        self.assertEqual(image_help_text, 'Загрузите картинку')

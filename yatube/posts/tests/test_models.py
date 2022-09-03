@@ -38,6 +38,7 @@ class PostsModelTest(TestCase):
             'pub_date': 'Дата и время поста',
             'group': 'Группа',
             'author': 'Автор',
+            'image': 'Картинка',
         }
         for field, expected_value in field_verboses.items():
             with self.subTest(field=field):
