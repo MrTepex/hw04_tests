@@ -10,7 +10,8 @@ from django.db.models.fields.files import ImageFieldFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post
+from ..forms import CommentForm
+from ..models import Comment, Group, Post
 
 User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -47,6 +48,11 @@ class PostViewsTest(TestCase):
             group=cls.group,
             pub_date=datetime.datetime.now,
             image=cls.uploaded
+        )
+        cls.comment = Comment.objects.create(
+            post=cls.post,
+            author=cls.user,
+            text='Просто коммент',
         )
 
     @classmethod
@@ -124,6 +130,9 @@ class PostViewsTest(TestCase):
         self.assertEqual(response.context.get('posts_amount'), 1)
         self.assertIsInstance(
             response.context.get('pub_date'), datetime.datetime)
+        # expected_comment_context = Comment.objects.filter(post_id=self.post.id)
+        # self.assertEqual(response.context.get('comments'), expected_comment_context)
+        self.assertEqual(response.context.get('form'), CommentForm)
 
     def test_post_create_and_edit_page_show_correct_context(self):
         """Проверка правильного контекста функции post_create"""

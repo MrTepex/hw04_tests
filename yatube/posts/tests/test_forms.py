@@ -9,8 +9,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..forms import PostForm
-from ..models import Group, Post
+from ..forms import CommentForm, PostForm
+from ..models import Comment, Group, Post
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -84,13 +84,15 @@ class PostFormsTest(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_post_create_form_redirects_anonymous_to_login(self):
+        """Проверка редиректа неавторизованного пользователя
+         со страницы создания поста"""
         posts_amount = Post.objects.count()
         response = self.guest_client.post(reverse('posts:post_create'))
         self.assertRedirects(response, f"{reverse('users:login')}?next="
                                        f"{reverse('posts:post_create')}")
         self.assertNotEqual(Post.objects.count(), posts_amount + 1)
 
-    def test_post_edit_form(self):
+    def test_post_edit_form_works_properly(self):
         """Проверка работы PostForm при изменении текста в post_edit
         плюс редирект пользователя, который не авторизован
         или не является автором поста"""
@@ -131,3 +133,41 @@ class PostFormsTest(TestCase):
             group_help_text, 'Группа, к которой будет относиться пост')
         self.assertEqual(image_label, 'Картинка')
         self.assertEqual(image_help_text, 'Загрузите картинку')
+
+
+class CommentFormsTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = get_user_model().objects.create_user(username='Haha')
+        cls.post = Post.objects.create(
+            author=cls.user,
+            text='Тестовый пост',
+        )
+        cls.form = CommentForm()
+
+    def setUp(self):
+        self.guest_client = Client()
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+
+    def test_comment_form_redirects_anonymous_to_login(self):
+        """Проверка редиректа неавторизованного пользователя
+        со страницы комментария поста"""
+        response = self.guest_client.post(reverse(
+            'posts:add_comment', kwargs={'post_id': self.post.id}))
+        self.assertRedirects(response, f"{reverse('users:login')}?next="
+        f"{reverse('posts:add_comment', kwargs={'post_id': self.post.id})}")
+
+    def test_comment_form_labels(self):
+        text_label = CommentFormsTest.form.fields['text'].label
+        self.assertEqual(text_label, 'Текст комментария')
+
+    def test_comment_form_works_properly(self):
+        self.authorized_client.post(reverse('posts:add_comment',
+                                    kwargs={'post_id': self.post.id}),
+                                    data={'text': 'Новый комментарий'})
+        self.assertTrue(Comment.objects.filter(
+            text='Новый комментарий',
+            post=self.post
+        ).exists())

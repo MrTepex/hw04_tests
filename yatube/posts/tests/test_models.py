@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from ..models import Group, Post
+from ..models import Comment, Group, Post
 
 
 class PostsModelTest(TestCase):
@@ -21,8 +21,8 @@ class PostsModelTest(TestCase):
             text='Тестовый пост',
         )
 
-    def test_models_have_correct_object_names(self):
-        """Проверка, что у моделей корректно работает __str__."""
+    def test_post_and_group_models_have_correct_object_names(self):
+        """Проверка, что у моделей Post и Group корректно работают __str__."""
         group = PostsModelTest.group
         post = PostsModelTest.post
         expected_group_name = group.title
@@ -31,7 +31,7 @@ class PostsModelTest(TestCase):
         self.assertEqual(expected_post_text, str(post))
 
     def test_post_model_verbose_name(self):
-        """Проверка корректности verbose_name атрибутов модели"""
+        """Проверка корректности verbose_name атрибутов моделей Post, Group"""
         post = PostsModelTest.post
         field_verboses = {
             'text': 'Содержание поста',
@@ -46,3 +46,43 @@ class PostsModelTest(TestCase):
                 self.assertEqual(post_verbose, expected_value,
                                  f'verbose_name для "{field}" модели '
                                  f'"{post.__class__.__name__}" некорректно')
+
+
+class CommentModelTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = get_user_model().objects.create_user(
+            username='111'
+        )
+        cls.post = Post.objects.create(
+            author=cls.user,
+            text='Тестовый пост',
+        )
+        cls.comment = Comment.objects.create(
+            text='Новый комментарий',
+            post=cls.post,
+            author=cls.user
+        )
+
+    def test_comment_model_have_correct_object_names(self):
+        """Проверка, что у модели Comment корректно работает __str__."""
+        comment = CommentModelTest.comment
+        expected_comment_text = comment.text[:30]
+        self.assertEqual(expected_comment_text, str(comment))
+
+    def test_comment_model_verbose_name(self):
+        """Проверка корректности verbose_name атрибутов модели Comment"""
+        comment = CommentModelTest.comment
+        field_verboses = {
+            'post': 'Пост',
+            'author': 'Автор комментария',
+            'text': 'Текст комментария',
+            'created': 'Дата и время комментария',
+        }
+        for field, expected_value in field_verboses.items():
+            with self.subTest(field=field):
+                post_verbose = comment._meta.get_field(field).verbose_name
+                self.assertEqual(post_verbose, expected_value,
+                                 f'verbose_name для "{field}" модели '
+                                 f'"{comment.__class__.__name__}" некорректно')

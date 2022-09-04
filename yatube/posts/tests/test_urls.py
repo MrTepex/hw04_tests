@@ -39,6 +39,7 @@ class PostURLTests(TestCase):
             '/posts/1/': HTTPStatus.OK,
             '/posts/1/edit/': HTTPStatus.FOUND,
             '/create/': HTTPStatus.FOUND,
+            '/posts/1/comment/': HTTPStatus.FOUND,
             '/unexisting_page/': HTTPStatus.NOT_FOUND,
         }
         for address, status in urls.items():
@@ -66,9 +67,21 @@ class PostURLTests(TestCase):
             '/profile/Anne_Hathaway/': 'posts/profile.html',
             '/posts/1/': 'posts/post_detail.html',
             '/posts/1/edit/': 'posts/post_create.html',
-            '/create/': 'posts/post_create.html'
+            '/create/': 'posts/post_create.html',
         }
         for address, template in templates_url_names.items():
             with self.subTest(address=address):
                 response = self.authorized_client.get(address)
                 self.assertTemplateUsed(response, template)
+
+    def test_posts_comment_url_redirect_user_properly(self):
+        """Проверка редиректа авторизованного пользователя при комментарии"""
+        response = self.authorized_client.get(
+            '/posts/1/comment/', follow=True)
+        self.assertRedirects(response, '/posts/1/')
+
+    def test_posts_comment_url_redirect_anonymous_on_login(self):
+        """Проверка редиректа неавторизованного пользователя
+        со страницы комментария поста на страницу "войти" """
+        response = self.guest_client.get('/posts/1/comment/', follow=True)
+        self.assertRedirects(response, '/auth/login/?next=/posts/1/comment/')
