@@ -130,8 +130,9 @@ class PostViewsTest(TestCase):
         self.assertEqual(response.context.get('posts_amount'), 1)
         self.assertIsInstance(
             response.context.get('pub_date'), datetime.datetime)
-        # expected_comment_context = Comment.objects.filter(post_id=self.post.id)
-        # self.assertEqual(response.context.get('comments'), expected_comment_context)
+        expected_comment_context = Comment.objects.filter(post_id=self.post.id)
+        self.assertQuerysetEqual(response.context.get('comments'),
+                                 map(repr, expected_comment_context))
         self.assertEqual(response.context.get('form'), CommentForm)
 
     def test_post_create_and_edit_page_show_correct_context(self):
