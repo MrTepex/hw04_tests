@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import Client, TestCase
 
 from ..models import Group, Post
@@ -61,6 +62,7 @@ class PostURLTests(TestCase):
 
     def test_posts_urls_uses_correct_templates(self):
         """Проверка на правильные шаблоны для страниц приложения users"""
+        cache.clear()
         templates_url_names = {
             '/': 'posts/index.html',
             '/group/test_slug/': 'posts/group_list.html',

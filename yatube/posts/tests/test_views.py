@@ -5,6 +5,7 @@ import tempfile
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models.fields.files import ImageFieldFile
 from django.test import Client, TestCase, override_settings
@@ -67,6 +68,7 @@ class PostViewsTest(TestCase):
 
     def test_pages_uses_correct_template(self):
         """Проверка на использование корректного шаблона"""
+        cache.clear()
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
             reverse('posts:group_list', kwargs={'slug': 'test_slug'}):
@@ -86,6 +88,7 @@ class PostViewsTest(TestCase):
 
     def test_index_page_show_correct_context(self):
         """Проверка правильного контекста функции index"""
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:index'))
         obj = response.context['page_obj'][0]
         self.assertEqual(obj.text, 'Тестовый пост')
@@ -151,6 +154,7 @@ class PostViewsTest(TestCase):
         """Проверка правильного отображения пагинатором
         количества постов на страницах, а также
         правильность содержания постов"""
+        cache.clear()
         Post.objects.bulk_create(
             Post(
                 text=f'Текст поста №{i}', author=self.user, group=self.group
@@ -181,7 +185,7 @@ class PostViewsTest(TestCase):
 
     def test_additional_for_post_create(self):
         """Дополнительная проверка при создании поста"""
-
+        cache.clear()
         Post.objects.create(
             author=self.user,
             group=Group.objects.create(
@@ -229,3 +233,16 @@ class PostViewsTest(TestCase):
             'posts:group_list', kwargs={'slug': 'just_second_slug'}))
         object_2 = response_2.context['page_obj'][0]
         self.assertNotEqual(object_1, object_2)
+
+    def test_cache_works_properly(self):
+        response1 = self.authorized_client.get(reverse('posts:index'))
+        result_1 = response1.content
+        Post.objects.filter(id=1).delete()
+        response2 = self.authorized_client.get(reverse('posts:index'))
+        result_2 = response2.content
+        self.assertEqual(result_1, result_2)
+        cache.clear()
+        response3 = self.authorized_client.get(reverse('posts:index'))
+        result_3 = response3.content
+        self.assertNotEqual(result_1, result_3)
+        self.assertNotEqual(result_2, result_3)

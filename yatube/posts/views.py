@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
 from .models import Comment, Group, Post, get_user_model
@@ -15,6 +16,7 @@ def get_page_objects(queryset, request):
     return {'page_obj': page_obj}
 
 
+@cache_page(20, key_prefix='index_page')
 def index(request):
     posts = Post.objects.select_related('author')
     context = get_page_objects(posts, request)
