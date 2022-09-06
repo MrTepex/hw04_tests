@@ -112,3 +112,21 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+
+
+@login_required
+def follow_index(request):
+    pass
+    # context = {}
+    # return render(request, 'posts/follow.html', context)
+
+
+@login_required
+def profile_follow(request, username):
+    if request.method == 'POST':
+        data = User.objects.select_related('author').get()
+
+
+@login_required
+def profile_unfollow(request, username):
+    pass
